@@ -29,15 +29,17 @@ ENV FLINK_HOME=/opt/flink
 ENV PATH="$FLINK_HOME/bin:$PATH"
 
 # Instala PyFlink
-RUN python3 -m pip install apache-flink==1.17.1
+RUN python3 -m pip install apache-flink==1.17.1 kafka-python
 
 # Copia el archivo de configuración de Flink modificado
 COPY flink-conf.yaml $FLINK_HOME/conf/
+
+# Copiar jars de kafka
+COPY ./jars/flink-connector-kafka-3.1.0-1.17.jar /opt/flink/lib/
+COPY ./jars/kafka-clients-3.8.0.jar /opt/flink/lib/
 
 # Copia el contenido de la aplicación al contenedor
 COPY . /app
 
 # Define el comando por defecto
 CMD ["/bin/bash"]
-# Comando por defecto para mantener el contenedor en ejecución
-#CMD ["/bin/bash", "-c", "/opt/flink/bin/jobmanager.sh start-foreground & /opt/flink/bin/taskmanager.sh start-foreground"]

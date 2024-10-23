@@ -7,8 +7,6 @@ def test_elasticsearch_connection():
     # Definir los parámetros de conexión
     es_host = 'http://elasticsearch:9200'
     index_name = 'kafka_flink_elasticsearch_streaming'
-    connector = 'elasticsearch-7'
-    format_type = 'json'
     
     try:
         # Conectar a Elasticsearch

@@ -59,17 +59,26 @@ services:
     ports:
       - "8081:8081"  # Mapeo de puertos del contenedor al host para acceder a la interfaz web del JobManager
     volumes:
-      - ./scripts:/tmp/scripts  # Volumen para montar un directorio del host en el contenedor
-    command: ["/bin/bash", "-c", "/opt/flink/bin/jobmanager.sh start-foreground"]
+      - ./code:/tmp/scripts  # Volumen para montar un directorio del host en el contenedor
+    command: jobmanager  # Comando que se ejecutará al iniciar este contenedor
+    environment:
+      JOB_MANAGER_RPC_ADDRESS: jobmanager  # Dirección RPC del JobManager
+      JOB_MANAGER_RPC_PORT: 6123  # Puerto RPC del JobManager
+      JOB_MANAGER_HEAP_SIZE: 1024m  # Tamaño de la memoria heap para el JobManager
+      PARALLELISM_DEFAULT: 1  # Paralelismo predeterminado
 
   # Definición del servicio taskmanager para Apache Flink
   taskmanager:
     build:
       context: .  # Contexto de construcción para la imagen del contenedor
       dockerfile: Dockerfile  # Archivo Dockerfile utilizado para construir la imagen
-    command: ["/bin/bash", "-c", "/opt/flink/bin/taskmanager.sh start-foreground"]  # Comando que se ejecutará al iniciar este contenedor
+    command: taskmanager  # Comando que se ejecutará al iniciar este contenedor
     depends_on:
       - jobmanager  # Dependencia del servicio taskmanager respecto al servicio jobmanager
+    environment:
+      JOB_MANAGER_RPC_ADDRESS: jobmanager  # Dirección RPC del JobManager para la comunicación
+      TASK_MANAGER_HEAP_SIZE: 1024m  # Tamaño de la memoria heap para el TaskManager
+      TASK_MANAGER_NUMBER_OF_TASK_SLOTS: 4  # Número de slots de tarea para el TaskManager
 
   # Elastic Search
   elasticsearch:

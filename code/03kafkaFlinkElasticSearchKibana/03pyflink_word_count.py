@@ -11,8 +11,8 @@ from pyflink.table import (
     DataTypes, TableEnvironment, EnvironmentSettings
 )
 
-# import nltk
-# nltk.download ('stopwords')
+import nltk
+nltk.download ('stopwords')
 # ^ using python console
 
 def word_count_stream_processing():
@@ -23,8 +23,9 @@ def word_count_stream_processing():
     # Specify connector and format jars
     t_env.get_config().get_configuration().set_string(
         "pipeline.jars",
-        "file:///home/angel/flink/lib/flink-sql-connector-kafka-1.17.1.jar;" # mind -> ;
-        "file:///home/angel/flink/lib/flink-sql-connector-elasticsearch7-3.0.1-1.17.jar"
+        "file:///tmp/scripts/jars/flink-python-1.17.2.jar;"
+        "file:///tmp/scripts/jars/flink-sql-connector-kafka-1.17.1.jar;" # mind -> ;
+        "file:///tmp/scripts/jars/flink-sql-connector-elasticsearch7-3.0.1-1.17.jar"
     )
 
     # Define source and sink DDLs
@@ -42,7 +43,7 @@ def word_count_stream_processing():
     ) WITH (
         'connector' = 'kafka',
         'topic' = 'tweets-sim',
-        'properties.bootstrap.servers' = 'localhost:9092',
+        'properties.bootstrap.servers' = 'docker-kafka-1:29092',
         'properties.group.id' = 'test_3',
         'scan.startup.mode' = 'latest-offset',
         'format' = 'json'
@@ -56,7 +57,7 @@ def word_count_stream_processing():
     ) WITH (        
         'connector' = 'elasticsearch-7',
         'index' = 'kafka_flink_elasticsearch_word_count',
-        'hosts' = 'localhost:9200',
+        'hosts' = 'http://elasticsearch:9200',
         'format' = 'json'
     )
     """
@@ -135,8 +136,12 @@ def word_count_stream_processing():
         .select(col('word'), lit(1).count.alias('number')) # count aggregation operation
         # lit(1) creates a constant literal value of 1 for each row
         # new column named 'number'
-
-    result.execute_insert('sink_table').wait()
-    print("Processing complete!")
+    try:
+        result.execute_insert('sink_table').wait()
+        print("Processing complete!")
+    except Exception as e:
+        print("Error head")
+        print(e)
+        print("Error tail")
 
 word_count_stream_processing()

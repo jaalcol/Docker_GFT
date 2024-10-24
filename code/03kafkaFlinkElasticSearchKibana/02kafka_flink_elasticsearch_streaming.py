@@ -1,6 +1,5 @@
 from pyflink.table import TableEnvironment, EnvironmentSettings
 from pyflink.table.expressions import col
-
 from elasticsearch import Elasticsearch
 
 def test_elasticsearch_connection():
@@ -16,12 +15,13 @@ def test_elasticsearch_connection():
         if es.ping():
             print("Conexión exitosa a Elasticsearch")
             
-            # Verificar el índice
+            # Verificar si el índice existe
             if es.indices.exists(index=index_name):
-                print(f"El índice '{index_name}' existe.")
+                print(f"El índice '{index_name}' ya existe.")
             else:
-                print(f"El índice '{index_name}' no existe.")
-
+                # Crear el índice si no existe
+                es.indices.create(index=index_name)
+                print(f"El índice '{index_name}' ha sido creado.")
         else:
             print("No se pudo conectar a Elasticsearch")
     
@@ -37,7 +37,7 @@ t_env = TableEnvironment.create(env_settings)
 # Specify connector and format jars
 t_env.get_config().get_configuration().set_string(
     "pipeline.jars",
-    "file:///tmp/scripts/jars/flink-sql-connector-kafka-1.17.1.jar;" # mind -> ;
+    "file:///tmp/scripts/jars/flink-sql-connector-kafka-1.17.1.jar;"  # mind -> ;
     "file:///tmp/scripts/jars/flink-sql-connector-elasticsearch7-3.0.1-1.17.jar"
 )
 
@@ -62,6 +62,7 @@ source_ddl = """
         'format' = 'json'
     )
 """
+
 # Define sink table DDL
 sink_ddl = """
     CREATE TABLE sink_table(
@@ -81,6 +82,7 @@ sink_ddl = """
         'format' = 'json'
     )
 """
+
 # Execute DDL statements to create tables
 t_env.execute_sql(source_ddl)
 t_env.execute_sql(sink_ddl)
@@ -114,6 +116,4 @@ try:
     result_table.execute_insert('sink_table').wait()
     print("Datos insertados correctamente en Elasticsearch.")
 except Exception as e:
-    print(result_table)
     print(f"Error al insertar datos en la tabla sink: {e}")
-
